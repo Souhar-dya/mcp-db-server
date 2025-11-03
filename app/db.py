@@ -190,9 +190,9 @@ class DatabaseManager:
                     columns = []
                     for row in result:
                         columns.append({
-                            "column_name": row.name,
-                            "data_type": row.type,
-                            "is_nullable": not bool(row.notnull)
+                            "column_name": row[1],  # name column
+                            "data_type": row[2],    # type column
+                            "is_nullable": not bool(row[3])  # notnull column
                         })
                     return columns
                 else:  # MySQL
@@ -208,11 +208,12 @@ class DatabaseManager:
                     """)
                 
                 result = await conn.execute(query, {"table_name": table_name})
+                # Use index-based access for compatibility with different SQLAlchemy versions
                 return [
                     {
-                        "column_name": row.column_name,
-                        "data_type": row.data_type,
-                        "is_nullable": row.is_nullable == "YES"
+                        "column_name": row[0],  # column_name
+                        "data_type": row[1],    # data_type
+                        "is_nullable": row[2] == "YES"  # is_nullable
                     }
                     for row in result
                 ]

@@ -1,5 +1,5 @@
 # Multi-stage build for efficient MCP Database Server
-FROM python:3.11-slim AS builder
+FROM python:alpine AS builder
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -8,10 +8,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
 # Install system dependencies for building
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    git \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk update && apk add --no-cache \
+    build-base \
+    git
 
 # Create and activate virtual environment
 ENV VIRTUAL_ENV=/opt/venv
@@ -26,7 +25,7 @@ RUN pip install --upgrade pip && \
     pip install -r requirements.txt
 
 # Production stage
-FROM python:3.11-slim
+FROM python:alpine
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -35,15 +34,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PATH="/opt/venv/bin:$PATH"
 
 # Install runtime system dependencies
-RUN apt-get update && apt-get install -y \
-    sqlite3 \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk update && apk add --no-cache \
+    sqlite
 
 # Copy virtual environment from builder
 COPY --from=builder $VIRTUAL_ENV $VIRTUAL_ENV
 
 # Create app directory and user
-RUN groupadd -r mcp && useradd -r -g mcp mcp
+RUN addgroup -g 1001 mcp && adduser -u 1001 -G mcp -s /bin/sh -D mcp
 WORKDIR /app
 
 # Copy application files
