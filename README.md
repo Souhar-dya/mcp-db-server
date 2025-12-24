@@ -278,7 +278,21 @@ curl -X POST "http://localhost:8000/mcp/query" \
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
-## � Changelog
+## 📝 Changelog
+
+### v1.3.0 (2025-12-24) - Docker Path Fix
+
+- **Fixed**: Resolved import path issues in Docker container causing `from db import DatabaseManager` to fail
+- **Fixed**: Changed relative paths to absolute paths in Dockerfile and docker-compose.yml healthchecks
+- **Improved**: `mcp_server.py` now uses robust path resolution that works both locally and in Docker containers
+- **Updated**: Docker image rebuilt and pushed with all path fixes
+
+### v1.2.0 (2025-11-03) - MySQL Column Access Fix
+
+- **Fixed**: Resolved `Could not locate column in row for column 'column_name'` error with MySQL databases
+- **Fixed**: Changed `describe_table` method to use index-based row access for better SQLAlchemy compatibility
+- **Improved**: Enhanced cross-database compatibility for schema introspection
+- **Resolved**: GitHub Issue [#1](https://github.com/Souhar-dya/mcp-db-server/issues/1)
 
 ### v1.1.0 (2025-09-28) - Async Bug Fix
 

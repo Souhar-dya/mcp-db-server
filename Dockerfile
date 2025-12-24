@@ -59,7 +59,7 @@ ENV DATABASE_URL=sqlite+aiosqlite:///data/default.db
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import asyncio; import sys; sys.path.insert(0, 'app'); from db import DatabaseManager; dm = DatabaseManager(); print('OK' if asyncio.run(dm.test_connection()) else 'FAIL')" || exit 1
+    CMD python -c "import asyncio; import sys; sys.path.insert(0, '/app/app'); from db import DatabaseManager; dm = DatabaseManager(); print('OK' if asyncio.run(dm.test_connection()) else 'FAIL')" || exit 1
 
 # Default command runs the MCP server
 CMD ["python", "mcp_server.py"]

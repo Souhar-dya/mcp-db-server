@@ -15,7 +15,14 @@ from pathlib import Path
 from typing import Dict, List, Any
 
 # Add the app directory to the path
-sys.path.insert(0, str(Path(__file__).parent / 'app'))
+# Use absolute path resolution that works both locally and in Docker
+_script_dir = Path(__file__).resolve().parent
+_app_dir = _script_dir / 'app'
+if _app_dir.exists():
+    sys.path.insert(0, str(_app_dir))
+else:
+    # Fallback for Docker container where app might be at /app/app
+    sys.path.insert(0, '/app/app')
 
 from mcp.server import fastmcp
 from dotenv import load_dotenv

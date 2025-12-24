@@ -22,7 +22,7 @@ services:
           "CMD",
           "python",
           "-c",
-          "import asyncio; import sys; sys.path.insert(0, 'app'); from db import DatabaseManager; dm = DatabaseManager(); print('OK' if asyncio.run(dm.test_connection()) else 'FAIL')",
+          "import asyncio; import sys; sys.path.insert(0, '/app/app'); from db import DatabaseManager; dm = DatabaseManager(); print('OK' if asyncio.run(dm.test_connection()) else 'FAIL')",
         ]
       interval: 30s
       timeout: 10s
