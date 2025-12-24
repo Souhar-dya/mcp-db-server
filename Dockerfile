@@ -55,6 +55,8 @@ RUN mkdir -p /data && chown -R mcp:mcp /app /data
 USER mcp
 
 # Set default database path
+
+# Default to SQLite for local/dev, override with DATABASE_URL for cloud (MySQL/PostgreSQL)
 ENV DATABASE_URL=sqlite+aiosqlite:///data/default.db
 
 # Health check

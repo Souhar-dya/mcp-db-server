@@ -142,6 +142,52 @@ DATABASE_URL=mysql+pymysql://user:pass@localhost:3306/mydb
 
 # PostgreSQL with SSL
 DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/mydb?sslmode=require
+
+### Database Connection Examples
+
+```bash
+# PostgreSQL (local or cloud)
+DATABASE_URL=postgresql+asyncpg://user:password@host:5432/dbname
+
+# MySQL (local or cloud)
+DATABASE_URL=mysql+aiomysql://user:password@host:3306/dbname
+
+# PostgreSQL with SSL (cloud, e.g. Neon, Supabase, Aiven)
+DATABASE_URL=postgresql+asyncpg://user:password@host:5432/dbname?sslmode=require
+
+# MySQL with SSL (cloud, e.g. Aiven, PlanetScale)
+DATABASE_URL=mysql+aiomysql://user:password@host:3306/dbname?ssl-mode=REQUIRED
+```
+
+> **Note:**
+> - For MySQL cloud providers, the `ssl-mode` parameter in the URL is ignored by the driver, but SSL is always enabled in the MCP server for cloud connections.
+> - For PostgreSQL, use `sslmode=require` for cloud DBs. For MySQL, just use the standard URL; SSL is handled automatically.
+> - If you see errors about `ssl-mode` or `sslmode`, check your URL and ensure you are using the correct driver prefix (`mysql+aiomysql` or `postgresql+asyncpg`).
+
+#### Cloud Database Examples
+
+```bash
+# Neon (PostgreSQL)
+DATABASE_URL=postgresql+asyncpg://username:password@ep-xxxxxx-pooler.us-east-2.aws.neon.tech/dbname
+
+# Aiven (MySQL)
+DATABASE_URL=mysql+aiomysql://avnadmin:yourpassword@mysql-xxxxxx-username-xxxx.aivencloud.com:11079/defaultdb?ssl-mode=REQUIRED
+```
+
+#### Docker Usage with Cloud DB
+
+```bash
+docker run -d \
+  -p 8000:8000 \
+  -e DATABASE_URL="<your_cloud_database_url>" \
+  souhardyak/mcp-db-server:latest
+```
+
+#### Troubleshooting
+
+- If you get `connect() got an unexpected keyword argument 'ssl-mode'`, ignore it: SSL is still enabled.
+- For network errors, check firewall and DB credentials.
+- For MySQL, always use `mysql+aiomysql` in the URL for async support.
 ```
 
 ## Security Features
