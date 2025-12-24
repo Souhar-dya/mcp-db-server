@@ -86,12 +86,27 @@ class DatabaseManager:
             return "postgresql"  # Default fallback
     
     def _initialize_engine(self):
-        """Initialize SQLAlchemy async engine"""
+        """Initialize SQLAlchemy async engine with optional MySQL SSL support"""
         try:
+            connect_args = {}
+            # Only for MySQL: add SSL context if required
+            if self.database_type == "mysql":
+                # Check for ssl_mode or ssl required in the URL or env
+                url_lower = self.database_url.lower()
+                if (
+                    "ssl_mode=required" in url_lower or
+                    "ssl-mode=required" in url_lower or
+                    os.getenv("MYSQL_SSL", "false").lower() == "true"
+                ):
+                    import ssl
+                    ssl_context = ssl.create_default_context()
+                    connect_args["ssl"] = ssl_context
+                    logger.info("MySQL SSL context enabled for connection.")
             self.engine = create_async_engine(
                 self.database_url,
                 poolclass=NullPool,
-                echo=False
+                echo=False,
+                connect_args=connect_args
             )
             logger.info(f"Database engine initialized for {self.database_type}")
         except Exception as e:
