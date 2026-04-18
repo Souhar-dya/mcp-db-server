@@ -10,14 +10,14 @@ import re
 from typing import Dict, List, Any, Optional
 
 try:
-    from transformers import T5ForConditionalGeneration, T5Tokenizer, pipeline
+    from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, pipeline
     HF_AVAILABLE = True
 except (ImportError, AttributeError, RuntimeError) as e:
     HF_AVAILABLE = False
     # Mock classes for when transformers is not available
-    class T5ForConditionalGeneration:
+    class AutoModelForSeq2SeqLM:
         pass
-    class T5Tokenizer:
+    class AutoTokenizer:
         pass
     def pipeline(*args, **kwargs):
         return None
@@ -39,10 +39,40 @@ class NLToSQLConverter:
         if not HF_AVAILABLE:
             logger.warning("HuggingFace transformers not available. Using rule-based fallback.")
             return
-        
-        # For demo purposes, skip the actual model loading to avoid dependency issues
-        logger.info("Demo mode: Skipping ML model loading. Using rule-based SQL generation.")
-        return
+
+        # Default disabled to avoid model downloads in low-connectivity environments.
+        enable_hf = os.getenv("ENABLE_HF_MODEL", "false").lower() in {"1", "true", "yes", "on"}
+        if not enable_hf:
+            logger.info("ENABLE_HF_MODEL is disabled. Using rule-based SQL generation.")
+            return
+
+        # Default true to avoid network fetches unless explicitly allowed.
+        local_files_only = os.getenv("HF_LOCAL_FILES_ONLY", "true").lower() in {"1", "true", "yes", "on"}
+        cache_dir = os.getenv("HF_MODEL_CACHE_DIR") or None
+
+        try:
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                self.model_name,
+                local_files_only=local_files_only,
+                cache_dir=cache_dir,
+            )
+            self.model = AutoModelForSeq2SeqLM.from_pretrained(
+                self.model_name,
+                local_files_only=local_files_only,
+                cache_dir=cache_dir,
+            )
+            self.pipeline = pipeline(
+                "text2text-generation",
+                model=self.model,
+                tokenizer=self.tokenizer,
+            )
+            logger.info("HuggingFace text2sql model loaded: %s", self.model_name)
+        except Exception as e:
+            self.model = None
+            self.tokenizer = None
+            self.pipeline = None
+            logger.warning("Failed to load HuggingFace model (%s). Falling back to rule-based SQL.", e)
+            return
     
     def _create_table_context(self, table_schemas: Dict[str, List[Dict[str, Any]]]) -> str:
         """Create table context string for the model"""

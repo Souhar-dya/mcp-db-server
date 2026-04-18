@@ -521,7 +521,8 @@ async def initialize_database(database_url: str = None, config_file: str = None)
         os.environ['DATABASE_URL'] = final_database_url
         
         db_manager = DatabaseManager()  # No parameter needed
-        await db_manager.test_connection()
+        if not await db_manager.test_connection():
+            raise ConnectionError(f"Database connection test failed for: {final_database_url}")
         logger.info(f"Connected to database: {final_database_url}")
         
         # Initialize NL to SQL converter

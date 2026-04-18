@@ -57,7 +57,8 @@ USER mcp
 # Set default database path
 
 # Default to SQLite for local/dev, override with DATABASE_URL for cloud (MySQL/PostgreSQL)
-ENV DATABASE_URL=sqlite+aiosqlite:///data/default.db
+# Use an absolute container path (/data/default.db).
+ENV DATABASE_URL=sqlite+aiosqlite:////data/default.db
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
@@ -69,11 +70,12 @@ CMD ["python", "-m", "uvicorn", "app.server:app", "--host", "0.0.0.0", "--port",
 # Labels for the MCP registry
 LABEL org.opencontainers.image.title="MCP Database Server"
 LABEL org.opencontainers.image.description="Model Context Protocol server for database interactions with natural language queries"
-LABEL org.opencontainers.image.version="1.1.0"
+LABEL org.opencontainers.image.version="1.3.0"
 LABEL org.opencontainers.image.authors="Souhardya Kundu <kundusouhardya@gmail.com>"
 LABEL org.opencontainers.image.url="https://github.com/Souhar-dya/mcp-db-server"
 LABEL org.opencontainers.image.source="https://github.com/Souhar-dya/mcp-db-server"
 LABEL org.opencontainers.image.licenses="MIT"
+LABEL io.modelcontextprotocol.server.name="io.github.Souhar-dya/mcp-db-server"
 LABEL mcp.server.name="database-server"
 LABEL mcp.server.type="database"
 LABEL mcp.server.capabilities="query,natural-language,multi-database"

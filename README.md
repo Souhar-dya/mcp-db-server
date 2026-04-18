@@ -225,6 +225,72 @@ This server is designed to work seamlessly with MCP-compatible AI agents:
 3. **Error Handling**: Consistent error messages and status codes
 4. **Documentation**: OpenAPI/Swagger documentation available at `/docs`
 
+## Publish To VS Code MCP Store (Registry)
+
+VS Code MCP gallery uses MCP Registry metadata. This repository now includes
+`server.json` for registry publication.
+
+### 1) Build and publish Docker image
+
+```bash
+docker build -t souhardyak/mcp-db-server:1.3.0 .
+docker push souhardyak/mcp-db-server:1.3.0
+```
+
+### 2) Validate server metadata
+
+`server.json` is configured for an OCI package and stdio transport:
+
+- `name`: `io.github.Souhar-dya/mcp-db-server`
+- `registryType`: `oci`
+- `identifier`: `docker.io/souhardyak/mcp-db-server:1.3.0`
+
+The Dockerfile includes registry ownership annotation:
+
+- `io.modelcontextprotocol.server.name=io.github.Souhar-dya/mcp-db-server`
+
+### 3) Publish to MCP Registry
+
+Install publisher and publish metadata:
+
+```bash
+mcp-publisher login github
+mcp-publisher publish
+```
+
+After publishing, users can discover/install it from MCP-compatible clients, including VS Code MCP experiences that read from the registry.
+
+### 4) Local VS Code config example
+
+```json
+{
+  "servers": {
+    "mcp-db-server": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "-e",
+        "DATABASE_URL=sqlite+aiosqlite:////data/default.db",
+        "souhardyak/mcp-db-server:1.3.0"
+      ]
+    }
+  }
+}
+```
+
+## Docker Smoke Test
+
+Use the dedicated Docker smoke test in `tests/docker`:
+
+```bash
+python tests/docker/smoke_test.py
+```
+
+This verifies Docker daemon access, image build, container startup, and health status.
+
 ## Deployment
 
 ### Docker Hub

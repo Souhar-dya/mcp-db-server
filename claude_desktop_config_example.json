@@ -7,7 +7,7 @@
         "--rm",
         "-i",
         "-p", "3000:3000",
-        "-e", "DATABASE_URL=sqlite+aiosqlite:///data/claude_test.db",
+        "-e", "DATABASE_URL=sqlite+aiosqlite:////data/claude_test.db",
         "souhardyak/mcp-db-server"
       ],
       "env": {}

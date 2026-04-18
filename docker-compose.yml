@@ -7,7 +7,7 @@ services:
     container_name: mcp-db-server
     restart: unless-stopped
     environment:
-      - DATABASE_URL=sqlite+aiosqlite:///data/default.db
+      - DATABASE_URL=sqlite+aiosqlite:////data/default.db
       - PYTHONUNBUFFERED=1
     ports:
       - "8000:8000"
