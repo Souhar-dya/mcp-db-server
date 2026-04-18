@@ -233,8 +233,8 @@ VS Code MCP gallery uses MCP Registry metadata. This repository now includes
 ### 1) Build and publish Docker image
 
 ```bash
-docker build -t souhardyak/mcp-db-server:1.3.0 .
-docker push souhardyak/mcp-db-server:1.3.0
+docker build -t souhardyak/mcp-db-server:1.3.1 .
+docker push souhardyak/mcp-db-server:1.3.1
 ```
 
 ### 2) Validate server metadata
@@ -243,7 +243,7 @@ docker push souhardyak/mcp-db-server:1.3.0
 
 - `name`: `io.github.Souhar-dya/mcp-db-server`
 - `registryType`: `oci`
-- `identifier`: `docker.io/souhardyak/mcp-db-server:1.3.0`
+- `identifier`: `docker.io/souhardyak/mcp-db-server:1.3.1`
 
 The Dockerfile includes registry ownership annotation:
 
@@ -274,7 +274,7 @@ After publishing, users can discover/install it from MCP-compatible clients, inc
         "-i",
         "-e",
         "DATABASE_URL=sqlite+aiosqlite:////data/default.db",
-        "souhardyak/mcp-db-server:1.3.0"
+        "souhardyak/mcp-db-server:1.3.1"
       ]
     }
   }

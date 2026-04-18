@@ -62,15 +62,15 @@ ENV DATABASE_URL=sqlite+aiosqlite:////data/default.db
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+    CMD python -c "import asyncio; import sys; sys.path.insert(0, '/app/app'); from db import DatabaseManager; dm = DatabaseManager(); print('OK' if asyncio.run(dm.test_connection()) else 'FAIL')" || exit 1
 
-# Default command runs the HTTP server on port 8000
-CMD ["python", "-m", "uvicorn", "app.server:app", "--host", "0.0.0.0", "--port", "8000"]
+# Default command runs the MCP stdio server
+CMD ["python", "mcp_server.py"]
 
 # Labels for the MCP registry
 LABEL org.opencontainers.image.title="MCP Database Server"
 LABEL org.opencontainers.image.description="Model Context Protocol server for database interactions with natural language queries"
-LABEL org.opencontainers.image.version="1.3.0"
+LABEL org.opencontainers.image.version="1.3.1"
 LABEL org.opencontainers.image.authors="Souhardya Kundu <kundusouhardya@gmail.com>"
 LABEL org.opencontainers.image.url="https://github.com/Souhar-dya/mcp-db-server"
 LABEL org.opencontainers.image.source="https://github.com/Souhar-dya/mcp-db-server"

@@ -208,7 +208,13 @@ async def connect_to_database(database_url: str) -> str:
     
     try:
         # Validate URL format
-        supported_types = ['sqlite+aiosqlite://', 'postgresql+asyncpg://', 'mysql+aiomysql://']
+        supported_types = [
+            'sqlite+aiosqlite://',
+            'postgresql+asyncpg://',
+            'mysql+aiomysql://',
+            'mongodb://',
+            'mongodb+srv://',
+        ]
         if not any(database_url.startswith(db_type) for db_type in supported_types):
             return f"ERROR: Unsupported database URL format. Supported: {', '.join(supported_types)}"
         
