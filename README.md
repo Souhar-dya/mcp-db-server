@@ -2,6 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+<a href="https://mcpindex.ai/server/io-github-souhar-dya-mcp-db-server"><img src="https://mcpindex.ai/api/v1/badge/io-github-souhar-dya-mcp-db-server" alt="mcpindex verdict" height="20" /></a>
 
 An MCP (Model Context Protocol) server that exposes relational databases (PostgreSQL/MySQL) to AI agents with natural language query support. Transform natural language questions into SQL queries and get structured results.
 
