@@ -207,6 +207,42 @@ DATABASE_URL=postgresql+asyncpg://user:password@host:5432/dbname?sslmode=require
 
 The server normalizes `sslmode=require` to the `ssl` option expected by `asyncpg`. A temporary PostgreSQL verification was completed successfully against a compatible cloud database using `CREATE`, `INSERT`, `SELECT`, `UPDATE`, `DELETE`, and `DROP`; no test data was retained. Never commit or share a connection URL containing a real password.
 
+### API key authentication
+
+`MCP_API_KEY` is a secret that you generate and provide to the server. It protects all database HTTP endpoints through the `X-API-Key` request header. The `/health` endpoint remains public for container health checks.
+
+Generate a strong key on Linux or macOS:
+
+```bash
+export MCP_API_KEY="$(openssl rand -hex 32)"
+```
+
+Generate one in Windows PowerShell:
+
+```powershell
+$bytes = New-Object byte[] 32
+[Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+$env:MCP_API_KEY = ([BitConverter]::ToString($bytes) -replace "-", "").ToLower()
+```
+
+Start the Docker image with the key:
+
+```bash
+docker run -d \
+  -p 8000:8000 \
+  -e DATABASE_URL="<your_database_url>" \
+  -e MCP_API_KEY="$MCP_API_KEY" \
+  souhardyak/mcp-db-server:latest
+```
+
+Call a protected endpoint with the same key:
+
+```bash
+curl -H "X-API-Key: $MCP_API_KEY" http://localhost:8000/mcp/list_tables
+```
+
+Keep the key in a password manager or deployment secret store. Do not commit it to Git, put it in a public image, or include it in logs.
+
 ## Security Features
 
 - **Mandatory HTTP Authentication**: Database API routes require `X-API-Key`; `/health` remains public for health checks
