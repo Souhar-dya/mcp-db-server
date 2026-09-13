@@ -16,6 +16,18 @@ An MCP (Model Context Protocol) server that exposes relational databases (Postgr
 - **Production Ready**: Health checks, logging, and error handling
 - **AI Agent Friendly**: Designed specifically for AI agent integration
 
+## Version 1.4.0 Changes
+
+- Added mandatory `X-API-Key` authentication for all database HTTP endpoints; `/health` remains public for health checks.
+- Removed unrestricted credentialed CORS and made allowed origins explicitly configurable.
+- Changed the default HTTP bind address to `127.0.0.1`.
+- Added table-name validation against existing database tables to block SQL injection through table routes.
+- Added PostgreSQL `sslmode=require` compatibility for `asyncpg` connections.
+- Updated Docker Compose, environment examples, and documentation for secure API-key configuration.
+- Published Docker images:
+  - `souhardyak/mcp-db-server:1.4.0`
+  - `souhardyak/mcp-db-server:latest`
+
 ## API Endpoints
 
 | Endpoint                          | Method | Description                                  |
