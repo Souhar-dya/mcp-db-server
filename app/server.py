@@ -6,10 +6,12 @@ An MCP server that exposes relational databases to AI agents with natural langua
 
 import os
 import logging
+import hmac
+import re
 from typing import Dict, List, Any, Optional
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Header, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -53,6 +55,47 @@ class TableSchema(BaseModel):
 
 # Global variables
 nl_converter: Optional[NLToSQLConverter] = None
+TABLE_NAME_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_$]*$")
+
+
+def _configured_api_key() -> Optional[str]:
+    """Return the configured API key, if one is present."""
+    api_key = os.getenv("MCP_API_KEY")
+    return api_key.strip() if api_key else None
+
+
+async def require_api_key(
+    x_api_key: Optional[str] = Header(default=None, alias="X-API-Key"),
+) -> None:
+    """Protect database routes with a mandatory, constant-time API-key check."""
+    configured_key = _configured_api_key()
+    if not configured_key:
+        logger.error("MCP_API_KEY is not configured; database API access is disabled")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database API authentication is not configured",
+        )
+    if not x_api_key or not hmac.compare_digest(x_api_key, configured_key):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or missing API key",
+            headers={"WWW-Authenticate": "ApiKey"},
+        )
+
+
+async def get_validated_table_name(
+    table_name: str,
+    db_manager: DatabaseManager,
+) -> str:
+    """Allow only an existing, simple database identifier."""
+    if not TABLE_NAME_PATTERN.fullmatch(table_name):
+        raise HTTPException(status_code=400, detail="Invalid table name")
+
+    tables = await db_manager.list_tables()
+    known_tables = {table["table_name"] for table in tables}
+    if table_name not in known_tables:
+        raise HTTPException(status_code=404, detail="Table not found")
+    return table_name
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -84,8 +127,12 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=[
+        origin.strip()
+        for origin in os.getenv("CORS_ALLOW_ORIGINS", "").split(",")
+        if origin.strip() and origin.strip() != "*"
+    ],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -101,7 +148,10 @@ async def health_check():
     }
 
 @app.get("/mcp/list_tables", response_model=List[TableInfo])
-async def list_tables(db_manager: DatabaseManager = Depends(get_db_manager)):
+async def list_tables(
+    _: None = Depends(require_api_key),
+    db_manager: DatabaseManager = Depends(get_db_manager),
+):
     """List all available tables in the database"""
     try:
         tables = await db_manager.list_tables()
@@ -117,9 +167,14 @@ async def list_tables(db_manager: DatabaseManager = Depends(get_db_manager)):
         raise HTTPException(status_code=500, detail=f"Failed to list tables: {str(e)}")
 
 @app.get("/mcp/describe/{table_name}", response_model=TableSchema)
-async def describe_table(table_name: str, db_manager: DatabaseManager = Depends(get_db_manager)):
+async def describe_table(
+    table_name: str,
+    _: None = Depends(require_api_key),
+    db_manager: DatabaseManager = Depends(get_db_manager),
+):
     """Get schema information for a specific table"""
     try:
+        table_name = await get_validated_table_name(table_name, db_manager)
         schema = await db_manager.describe_table(table_name)
         return TableSchema(
             table_name=table_name,
@@ -132,6 +187,8 @@ async def describe_table(table_name: str, db_manager: DatabaseManager = Depends(
                 for col in schema
             ]
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error describing table {table_name}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to describe table: {str(e)}")
@@ -139,7 +196,8 @@ async def describe_table(table_name: str, db_manager: DatabaseManager = Depends(
 @app.post("/mcp/query", response_model=QueryResponse)
 async def execute_nl_query(
     request: QueryRequest,
-    db_manager: DatabaseManager = Depends(get_db_manager)
+    _: None = Depends(require_api_key),
+    db_manager: DatabaseManager = Depends(get_db_manager),
 ):
     """Convert natural language query to SQL and execute it"""
     global nl_converter
@@ -175,10 +233,12 @@ async def execute_nl_query(
 async def get_table_sample(
     table_name: str,
     limit: int = 5,
-    db_manager: DatabaseManager = Depends(get_db_manager)
+    _: None = Depends(require_api_key),
+    db_manager: DatabaseManager = Depends(get_db_manager),
 ):
     """Get a sample of data from a specific table"""
     try:
+        table_name = await get_validated_table_name(table_name, db_manager)
         query = f"SELECT * FROM {table_name} LIMIT {min(limit, 50)}"
         results = await db_manager.execute_safe_query(query, limit=min(limit, 50))
         
@@ -188,6 +248,8 @@ async def get_table_sample(
             "row_count": len(results)
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error getting sample from table {table_name}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get table sample: {str(e)}")
@@ -196,7 +258,7 @@ if __name__ == "__main__":
     import uvicorn
     
     port = int(os.getenv("PORT", 8000))
-    host = os.getenv("HOST", "0.0.0.0")
+    host = os.getenv("HOST", "127.0.0.1")
     
     uvicorn.run(
         "app.server:app",

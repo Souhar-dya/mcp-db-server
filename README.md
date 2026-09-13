@@ -35,6 +35,7 @@ An MCP (Model Context Protocol) server that exposes relational databases (Postgr
    ```bash
    git clone https://github.com/Souhar-dya/mcp-db-server.git
    cd mcp-db-server
+   export MCP_API_KEY="$(openssl rand -hex 32)"
    docker-compose up --build
    ```
 
@@ -44,14 +45,15 @@ An MCP (Model Context Protocol) server that exposes relational databases (Postgr
    # Health check
    curl http://localhost:8000/health
 
-   # List tables
-   curl http://localhost:8000/mcp/list_tables
+   # List tables (requires the configured API key)
+   curl -H "X-API-Key: $MCP_API_KEY" http://localhost:8000/mcp/list_tables
 
    # Describe a table
-   curl http://localhost:8000/mcp/describe/customers
+   curl -H "X-API-Key: $MCP_API_KEY" http://localhost:8000/mcp/describe/customers
 
    # Natural language query
    curl -X POST "http://localhost:8000/mcp/query" \
+     -H "X-API-Key: $MCP_API_KEY" \
      -H "Content-Type: application/json" \
      -d '{"nl_query": "show top 5 customers by total orders"}'
    ```
@@ -73,6 +75,7 @@ An MCP (Model Context Protocol) server that exposes relational databases (Postgr
 
    ```bash
    export DATABASE_URL="postgresql+asyncpg://user:password@localhost:5432/dbname"
+   export MCP_API_KEY="$(openssl rand -hex 32)"
    # or for MySQL:
    # export DATABASE_URL="mysql+pymysql://user:password@localhost:3306/dbname"
    ```
@@ -129,8 +132,10 @@ curl -X POST "http://localhost:8000/mcp/query" \
 | `DB_USER`      | Database username            | `postgres`                                                       |
 | `DB_PASSWORD`  | Database password            | `postgres`                                                       |
 | `DB_NAME`      | Database name                | `postgres`                                                       |
-| `HOST`         | Server host                  | `0.0.0.0`                                                        |
+| `HOST`         | Server host                  | `127.0.0.1`                                                      |
 | `PORT`         | Server port                  | `8000`                                                           |
+| `MCP_API_KEY`  | Required API key for database HTTP routes | Not set (API disabled)                              |
+| `CORS_ALLOW_ORIGINS` | Comma-separated allowed browser origins | Empty (disabled)                         |
 
 ### Database Connection Examples
 
@@ -193,6 +198,9 @@ docker run -d \
 
 ## Security Features
 
+- **Mandatory HTTP Authentication**: Database API routes require `X-API-Key`; `/health` remains public for health checks
+- **Secure Network Default**: HTTP mode binds to `127.0.0.1` unless explicitly configured otherwise
+- **Restricted CORS**: Cross-origin access is disabled unless origins are explicitly configured
 - **Read-Only Operations**: Only SELECT queries are allowed
 - **Query Validation**: Automatic detection and blocking of dangerous SQL operations
 - **Result Limiting**: Maximum 50 rows per query (configurable)

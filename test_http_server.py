@@ -23,6 +23,7 @@ def test_http_server():
     # Prepare environment with DATABASE_URL
     env = os.environ.copy()
     env["DATABASE_URL"] = "sqlite+aiosqlite:///data/test.db"
+    env["MCP_API_KEY"] = "test-api-key"
     
     # Start the server process
     server_process = subprocess.Popen(
@@ -47,15 +48,41 @@ def test_http_server():
         assert health_data["service"] == "mcp-db-server", "Service name mismatch"
         print("✓ /health endpoint working correctly")
         
-        # Test 2: List tables endpoint
-        print("Testing /mcp/list_tables endpoint...")
+        # Test 2: Database routes require authentication
         response = requests.get("http://localhost:8000/mcp/list_tables", timeout=5)
+        assert response.status_code == 401, "Database route accepted a missing API key"
+        response = requests.get(
+            "http://localhost:8000/mcp/list_tables",
+            headers={"X-API-Key": "wrong-key"},
+            timeout=5,
+        )
+        assert response.status_code == 401, "Database route accepted an invalid API key"
+        print("✓ Database routes reject missing and invalid API keys")
+
+        # Test 3: List tables endpoint
+        print("Testing /mcp/list_tables endpoint...")
+        response = requests.get(
+            "http://localhost:8000/mcp/list_tables",
+            headers={"X-API-Key": env["MCP_API_KEY"]},
+            timeout=5,
+        )
         assert response.status_code == 200, f"List tables failed with status {response.status_code}"
         tables = response.json()
         assert isinstance(tables, list), "List tables should return a list"
         print("✓ /mcp/list_tables endpoint working correctly")
         
-        # Test 3: API docs endpoint
+        # Test 4: Injection-shaped table names are rejected
+        response = requests.get(
+            "http://localhost:8000/mcp/tables/customers%20UNION%20SELECT%20999%2Cname%20FROM%20customers/sample",
+            headers={"X-API-Key": env["MCP_API_KEY"]},
+            timeout=5,
+        )
+        assert response.status_code in {400, 404}, (
+            "Injection-shaped table name was not rejected"
+        )
+        print("✓ Injection-shaped table names are rejected")
+
+        # Test 5: API docs endpoint
         print("Testing /docs endpoint...")
         response = requests.get("http://localhost:8000/docs", timeout=5)
         assert response.status_code == 200, f"Docs failed with status {response.status_code}"

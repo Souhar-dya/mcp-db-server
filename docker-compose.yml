@@ -8,7 +8,10 @@ services:
     restart: unless-stopped
     environment:
       - DATABASE_URL=sqlite+aiosqlite:////data/default.db
+      - MCP_API_KEY=${MCP_API_KEY:?Set MCP_API_KEY before starting the HTTP service}
+      - HOST=0.0.0.0
       - PYTHONUNBUFFERED=1
+    command: ["python", "-m", "uvicorn", "app.server:app", "--host", "0.0.0.0", "--port", "8000"]
     ports:
       - "8000:8000"
     volumes:
