@@ -339,6 +339,14 @@ class DatabaseManager:
                 return
 
             connect_args = {}
+            if self.database_type == "postgresql":
+                # asyncpg uses "ssl"; libpq-style URLs commonly use "sslmode".
+                self.database_url = re.sub(
+                    r"([?&])sslmode=",
+                    r"\1ssl=",
+                    self.database_url,
+                    flags=re.IGNORECASE,
+                )
             # Only for MySQL: add SSL context if required
             if self.database_type == "mysql":
                 # Check for ssl_mode or ssl required in the URL or env
