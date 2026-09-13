@@ -27,6 +27,9 @@ An MCP (Model Context Protocol) server that exposes relational databases (Postgr
 - Published Docker images:
   - `souhardyak/mcp-db-server:1.4.0`
   - `souhardyak/mcp-db-server:latest`
+- Added GitHub Container Registry publishing for:
+  - `ghcr.io/souhar-dya/mcp-db-server:1.4.0`
+  - `ghcr.io/souhar-dya/mcp-db-server:latest`
 
 ## API Endpoints
 
@@ -201,6 +204,20 @@ docker run -d \
   -e MCP_API_KEY="<your_random_api_key>" \
   souhardyak/mcp-db-server:latest
 ```
+
+GitHub Container Registry is also available:
+
+```bash
+docker login ghcr.io
+docker pull ghcr.io/souhar-dya/mcp-db-server:latest
+docker run -d \
+  -p 8000:8000 \
+  -e DATABASE_URL="<your_database_url>" \
+  -e MCP_API_KEY="$MCP_API_KEY" \
+  ghcr.io/souhar-dya/mcp-db-server:latest
+```
+
+Images are published automatically when a `v*.*.*` tag is pushed. The workflow also creates the matching GitHub Release. To publish an existing tag such as `v1.4.0`, open the workflow's **Run workflow** action and enter `1.4.0`. Set the GHCR package visibility to **Public** in the repository's **Packages** settings if unauthenticated pulls should be allowed.
 
 #### Troubleshooting
 
