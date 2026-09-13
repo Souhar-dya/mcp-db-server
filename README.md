@@ -186,6 +186,7 @@ DATABASE_URL=mysql+aiomysql://avnadmin:yourpassword@mysql-xxxxxx-username-xxxx.a
 docker run -d \
   -p 8000:8000 \
   -e DATABASE_URL="<your_cloud_database_url>" \
+  -e MCP_API_KEY="<your_random_api_key>" \
   souhardyak/mcp-db-server:latest
 ```
 
@@ -195,6 +196,16 @@ docker run -d \
 - For network errors, check firewall and DB credentials.
 - For MySQL, always use `mysql+aiomysql` in the URL for async support.
 ```
+
+### PostgreSQL SSL connection note
+
+For PostgreSQL cloud providers, use an asyncpg URL and `sslmode=require`:
+
+```bash
+DATABASE_URL=postgresql+asyncpg://user:password@host:5432/dbname?sslmode=require
+```
+
+The server normalizes `sslmode=require` to the `ssl` option expected by `asyncpg`. A temporary PostgreSQL verification was completed successfully against a compatible cloud database using `CREATE`, `INSERT`, `SELECT`, `UPDATE`, `DELETE`, and `DROP`; no test data was retained. Never commit or share a connection URL containing a real password.
 
 ## Security Features
 
