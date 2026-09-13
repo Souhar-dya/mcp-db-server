@@ -70,7 +70,7 @@ CMD ["python", "mcp_server.py"]
 # Labels for the MCP registry
 LABEL org.opencontainers.image.title="MCP Database Server"
 LABEL org.opencontainers.image.description="Model Context Protocol server for database interactions with natural language queries"
-LABEL org.opencontainers.image.version="1.3.1"
+LABEL org.opencontainers.image.version="1.4.0"
 LABEL org.opencontainers.image.authors="Souhardya Kundu <kundusouhardya@gmail.com>"
 LABEL org.opencontainers.image.url="https://github.com/Souhar-dya/mcp-db-server"
 LABEL org.opencontainers.image.source="https://github.com/Souhar-dya/mcp-db-server"
